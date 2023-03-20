@@ -2,7 +2,8 @@ from pyrogram import Client, filters
 from config import *
 import os
 import requests
-
+import math
+import shutil
 bot = Client(
 "My bot",
 api_id=API_ID,
@@ -37,7 +38,38 @@ def cmd_upload(bot, message):
             bot.send_document(chat_id=message.chat.id, document=file_path)
         except (ValueError, IndexError):
             bot.send_message(chat_id=message.chat.id, text=f"😰 No se pudo subir el archivo {file_number}: número de archivo no válido")
-            
+ 
+ 
+#Command to compress a file in parts
+@bot.on_message(filters.command('seven'))
+def cmd_compress(bot, message):
+    files = os.listdir('descarga')
+    if not files:
+        bot.send_message(chat_id=message.chat.id, text="💢 No hay archivos en la carpeta de descarga 💢")
+        return
+    try:
+        file_number = int(message.text.split(' ')[1]) - 1
+        file_size_mb = int(message.text.split(' ')[2])
+    except (ValueError, IndexError):
+        bot.send_message(chat_id=message.chat.id, text="🤔 Debes especificar el número de archivo y el tamaño máximo por parte en megabytes")
+        return
+    try:
+        file_name = sorted(files)[file_number]
+        file_path = f"descarga/{file_name}"
+        parts_folder = f"descarga/parts"
+        if not os.path.exists(parts_folder):
+            os.mkdir(parts_folder)
+        with open(file_path, "rb") as f:
+            file_size = os.path.getsize(file_path)
+            num_parts = math.ceil(file_size / (file_size_mb * 1048576))
+            for i in range(num_parts):
+                part_file_path = f"{parts_folder}/{file_name}.part{i+1}"
+                with open(part_file_path, "wb") as p:
+                    shutil.copyfileobj(f, p, file_size_mb * 1048576)
+                bot.send_document(chat_id=message.chat.id, document=part_file_path)
+                os.remove(part_file_path)
+    except (ValueError, IndexError):
+        bot.send_message(chat_id=message.chat.id, text=f"😰 No se pudo comprimir el archivo {file_number}: número de archivo no válido")           
     
    #listar archivos
 @bot.on_message(filters.command('list'))
@@ -70,11 +102,11 @@ def delete_all_files(client, message):
 def delete_file(client, message):
     files = os.listdir('descarga')
     if not files:
-        client.send_message(chat_id=message.chat.id, text="💢 Carpeta vacía💢")
+        client.send_message(chat_=message.chat., text="💢 Carpeta vacía💢")
         return
     file_numbers = message.text.split(' ')[1:]
     if not file_numbers:
-        client.send_message(chat_id=message.chat.id, text="🤔Debes especificar el número de al menos un archivo que deseas eliminar")
+        client.send_message(chat_=message.chat.id, text="🤔Debes especificar el número de al menos un archivo que deseas eliminar")
         return
     deleted_files = []
     for file_number in file_numbers:
