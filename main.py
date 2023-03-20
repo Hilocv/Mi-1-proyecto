@@ -99,14 +99,14 @@ def delete_all_files(client, message):
     
 #ELIMINAR
 @bot.on_message(filters.command('delete'))
-def delete_file(client, message):
+def delete_file(bot, message):
     files = os.listdir('descarga')
     if not files:
         bot.send_message(chat_=message.chat., text="💢 Carpeta vacía💢")
         return
     file_numbers = message.text.split(' ')[1:]
     if not file_numbers:
-        client.send_message(chat_=message.chat.id, text="🤔Debes especificar el número de al menos un archivo que deseas eliminar")
+        bot.send_message(chat_=message.chat.id, text="🤔Debes especificar el número de al menos un archivo que deseas eliminar")
         return
     deleted_files = []
     for file_number in file_numbers:
@@ -117,7 +117,7 @@ def delete_file(client, message):
             os.remove(file_path)
             deleted_files.append(file_name)
         except (ValueError, IndexError):
-            client.send_message(chat_id=message.chat.id, text=f"😰No se pudo eliminar el archivo {file_number}: número de archivo no válido")
+            bot.send_message(chat_id=message.chat.id, text=f"😰No se pudo eliminar el archivo {file_number}: número de archivo no válido")
     if deleted_files:
         bot.send_message(chat_id=message.chat.id, text=f"🔥Archivos eliminados de la carpeta de descarga: {', '.join(deleted_files)}")
     
