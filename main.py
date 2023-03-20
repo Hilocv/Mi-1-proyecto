@@ -3,7 +3,7 @@ from config import *
 import os
 import requests
 import math
-import shutil
+import 
 bot = Client(
 "My bot",
 api_id=API_ID,
@@ -90,7 +90,7 @@ def list_files(client, message):
 def delete_all_files(client, message):
     files = os.listdir('descarga')
     if not files:
-        client.send_message(chat_id=message.chat.id, text="💢 No hay archivos en la carpeta de descarga 💢")
+        bot.send_message(chat_id=message.chat.id, text="💢 No hay archivos en la carpeta de descarga 💢")
         return
     for file_name in files:
         file_path = f"descarga/{file_name}"
@@ -102,7 +102,7 @@ def delete_all_files(client, message):
 def delete_file(client, message):
     files = os.listdir('descarga')
     if not files:
-        client.send_message(chat_=message.chat., text="💢 Carpeta vacía💢")
+        bot.send_message(chat_=message.chat., text="💢 Carpeta vacía💢")
         return
     file_numbers = message.text.split(' ')[1:]
     if not file_numbers:
