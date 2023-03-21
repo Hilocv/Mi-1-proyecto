@@ -1,5 +1,6 @@
-#from pyrogram import Client, filters
-#from config import *
+from pyrogram import Client, filters
+from config import *
+from pyrogram.types import InlineKeyboardButton,InlineKeyboardMarkup
 import os
 import requests
 import math
@@ -39,44 +40,13 @@ def cmd_upload(bot, message):
         except (ValueError, IndexError):
             bot.send_message(chat_id=message.chat.id, text=f"😰 No se pudo subir el archivo {file_number}: número de archivo no válido")
  
- 
-#Command to compress a file in parts
-@bot.on_message(filters.command('seven'))
-def cmd_compress(bot, message):
-    files = os.listdir('descarga')
-    if not files:
-        bot.send_message(chat_id=message.chat.id, text="💢 No hay archivos en la carpeta de descarga 💢")
-        return
-    try:
-        file_number = int(message.text.split(' ')[1]) - 1
-        file_size_mb = int(message.text.split(' ')[2])
-    except (ValueError, IndexError):
-        bot.send_message(chat_id=message.chat.id, text="🤔 Debes especificar el número de archivo y el tamaño máximo por parte en megabytes")
-        return
-    try:
-        file_name = sorted(files)[file_number]
-        file_path = f"descarga/{file_name}"
-        parts_folder = f"descarga/parts"
-        if not os.path.exists(parts_folder):
-            os.mkdir(parts_folder)
-        with open(file_path, "rb") as f:
-            file_size = os.path.getsize(file_path)
-            num_parts = math.ceil(file_size / (file_size_mb * 1048576))
-            for i in range(num_parts):
-                part_file_path = f"{parts_folder}/{file_name}.part{i+1}"
-                with open(part_file_path, "wb") as p:
-                    shutil.copyfileobj(f, p, file_size_mb * 1048576)
-                bot.send_document(chat_id=message.chat.id, document=part_file_path)
-                os.remove(part_file_path)
-    except (ValueError, IndexError):
-        bot.send_message(chat_id=message.chat.id, text=f"😰 No se pudo comprimir el archivo {file_number}: número de archivo no válido")           
-    
+
    #listar archivos
 @bot.on_message(filters.command('list'))
 def list_files(client, message):
     files = os.listdir('descarga')
     if not files:
-        client.send_message(chat_id=message.chat.id, text="🚨No hay archivos en la carpeta de descarga🚨")
+        bot.send_message(chat_id=message.chat.id, text="🚨No hay archivos en la carpeta de descarga🚨")
         return
     file_details = ""
     for index, file_name in enumerate(sorted(files), start=1):
@@ -95,7 +65,7 @@ def delete_all_files(client, message):
     for file_name in files:
         file_path = f"descarga/{file_name}"
         os.remove(file_path)
-    client.send_message(chat_id=message.chat.id, text="🔥 ¡Todos los archivos han sido eliminados de la carpeta de descarga! 🔥")
+        bot.send_message(message.chat.id,"🔥 ¡Todos los archivos han sido eliminados de la carpeta de descarga! 🔥")
     
 #ELIMINAR
 @bot.on_message(filters.command('delete'))
@@ -133,25 +103,44 @@ def welcome(client, message):
 def cmd_start(bot, message):
     bot.send_photo(message.chat.id,'https://telegra.ph/file/de4a6ec485c1ab87b2b47.jpg',caption = STARTED)
 
-#Delete_message
-@bot.on_message(filters.private) # solo eliminar los mensajes en chats privados
-def delete_message(client, message):
-    bot.delete_messages(chat_id=message.chat.id, message_ids=message.message_id)
+#Command help
+@bot.on_message(filters.command('help'))
+def cmd_help(bot,message):
+    bot.send_message(message.chat.id,HELP)
+    
+    
+#Command InlineKeyboardMarkup [Button]
+REPORT_MESSAGE = '🚦REPORTAR_FALLA🚦'
+REPORT_MESSAGE_BUTTONS = [
+  [InlineKeyboardButton('👤ADMIN',url='https://t.me/nautaii'),
+  InlineKeyboardButton('🏵️CHANEL',url='https://t.me/nautidev')
+  ],
+  [
+  InlineKeyboardButton('🗂️Data',url='https://t.me/database'),
+  InlineKeyboardButton('🤔Otro',url='https://t.me/otros')
+  ]
+  ]
+@bot.on_message(filters.command('report'))
+def cmd_report(bot,message):
+    text = REPORT_MESSAGE
+    reply_markup = InlineKeyboardMarkup(REPORT_MESSAGE_BUTTONS)
+    message.reply(
+      text=text,
+      reply_markup=reply_markup,
+      disable_web_page_preview=True
+      )
+      
+
 #Command to get user ID
 @bot.on_message(filters.command('id'))
 def cmd_id(bot, message):
     bot.send_message(message.chat.id, f'Tu ID es: <code>{message.chat.id}</code>')
-
-#Command help
-@bot.on_message(filters.command('help'))
-def cmd_help(bot, message):
-    message.reply_text(HELP)
-
+    
 #Command to send an audio file
 @bot.on_message(filters.command('audio'))
 def cmd_audio(bot, message):
     bot.send_audio(message.chat.id, 'CQACAgEAAxkBAAIDxWQXcKeIvk1O4e0U7UfbA7Bb3cYbAAJDDQACCdEwR2yWf2_FmfjOHgQ',caption = 'Toma tu audio')
-
+    
 #Command to send a photo
 @bot.on_message(filters.command('foto'))
 def cmd_foto(bot, message):
