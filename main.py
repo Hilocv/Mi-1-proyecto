@@ -78,7 +78,6 @@ def compress_and_split_files(client, message):
     result = compress_files(file_numbers, part_size)
     bot.send_message(chat_id=message.chat.id, text=result)
     
-
 # listar archivos
 @bot.on_message(filters.command('list'))
 def list_files(client, message):
@@ -87,15 +86,19 @@ def list_files(client, message):
     if not files and not compressed_files:
         bot.send_message(chat_id=message.chat.id, text="🚨No hay archivos en la carpeta de descarga🚨")
         return
-    file_details = ""
+    file_details = "Archivos descargados:\n" if files else ""
     for index, file_name in enumerate(sorted(files), start=1):
         file_path = f"descarga/{file_name}"
         file_size = os.path.getsize(file_path) / (1024 * 1024)
         file_details += f"{index}. {file_name} ({file_size:.2f} MB)\n"
+    compressed_file_details = "Archivos comprimidos y divididos:\n" if compressed_files else ""
     for index, file_name in enumerate(sorted(compressed_files), start=len(files)+1):
         file_path = f"descarga/{file_name}"
+        zip_file = zipfile.ZipFile(file_path)
+        num_parts = len(zip_file.namelist())
         file_size = os.path.getsize(file_path) / (1024 * 1024)
-        file_details += f"{index}. {file_name} ({file_size:.2f} MB)\n"
+        compressed_file_details += f"{index}. {file_name} ({num_parts} partes, {file_size:.2f} MB)\n"
+    file_details += compressed_file_details
     bot.send_message(chat_id=message.chat.id, text=file_details, disable_web_page_preview=True)
 #Command to delete all files
 @bot.on_message(filters.command('deleteall'))
