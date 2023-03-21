@@ -1,12 +1,10 @@
 from pyrogram import Client, filters
 from config import *
-from folder import create_folder
 from pyrogram.types import InlineKeyboardButton,InlineKeyboardMarkup
 import os
 import requests
 import math
 import shutil
-import zipfile
 bot = Client(
 "My bot",
 api_id=API_ID,
@@ -21,34 +19,6 @@ def download_files(client, message):
     file_path = f"descarga/{file_type.file_name}"
     message.download(file_path)
     bot.send_message(chat_id=message.chat.id, text=f"📥Archivo {file_type.file_name} descargado📥")
-#funcion_seven
-def compress_files(file_numbers, part_size):
-    files = os.listdir('descarga')
-    if not files:
-        return "🚨 No hay archivos en la carpeta de descarga 🚨"
-    if not file_numbers:
-        return "🤔 Debes especificar el número de al menos un archivo que deseas comprimir"
-    for file_number in file_numbers:
-        try:
-            index = int(file_number) - 1
-            file_name = sorted(files)[index]
-            file_path = f"descarga/{file_name}"
-            file_size = os.path.getsize(file_path)
-            parts = math.ceil(file_size / (part_size * 1024 * 1024))
-            with open(file_path, 'rb') as f_in:
-                for part in range(parts):
-                    part_path = f"descarga/{file_name}.part{part+1}"
-                    with open(part_path, 'wb') as f_out:
-                        shutil.copyfileobj(f_in, f_out, part_size * 1024 * 1024)
-            compressed_file_name = f"{file_name}.zip"
-            with zipfile.ZipFile(compressed_file_name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                for part in range(parts):
-                    part_path = f"descarga/{file_name}.part{part+1}"
-                    zip_file.write(part_path)
-                    os.remove(part_path)
-            return f"✅ Archivo {file_name} comprimido y dividido en {parts} partes de {part_size} MB ✅"
-        except (ValueError, IndexError):
-            return f"😰 No se pudo comprimir el archivo {file_number}: número de archivo no válido"
 
 #Command to upload a file
 @bot.on_message(filters.command('up'))
@@ -69,37 +39,22 @@ def cmd_upload(bot, message):
             bot.send_document(chat_id=message.chat.id, document=file_path)
         except (ValueError, IndexError):
             bot.send_message(chat_id=message.chat.id, text=f"😰 No se pudo subir el archivo {file_number}: número de archivo no válido")
-#Comprimir
+ 
 
-@bot.on_message(filters.command('seven'))
-def compress_and_split_files(client, message):
-    file_numbers = message.text.split(' ')[1:-1]
-    part_size = int(message.text.split(' ')[-1])
-    result = compress_files(file_numbers, part_size)
-    bot.send_message(chat_id=message.chat.id, text=result)
-    
-# listar archivos
+   #listar archivos
 @bot.on_message(filters.command('list'))
 def list_files(client, message):
     files = os.listdir('descarga')
-    compressed_files = [f for f in os.listdir('descarga') if f.endswith('.zip')]
-    if not files and not compressed_files:
+    if not files:
         bot.send_message(chat_id=message.chat.id, text="🚨No hay archivos en la carpeta de descarga🚨")
         return
-    file_details = "Archivos descargados:\n" if files else ""
+    file_details = ""
     for index, file_name in enumerate(sorted(files), start=1):
         file_path = f"descarga/{file_name}"
         file_size = os.path.getsize(file_path) / (1024 * 1024)
         file_details += f"{index}. {file_name} ({file_size:.2f} MB)\n"
-    compressed_file_details = "Archivos comprimidos y divididos:\n" if compressed_files else ""
-    for index, file_name in enumerate(sorted(compressed_files), start=len(files)+1):
-        file_path = f"descarga/{file_name}"
-        zip_file = zipfile.ZipFile(file_path)
-        num_parts = len(zip_file.namelist())
-        file_size = os.path.getsize(file_path) / (1024 * 1024)
-        compressed_file_details += f"{index}. {file_name} ({num_parts} partes, {file_size:.2f} MB)\n"
-    file_details += compressed_file_details
-    bot.send_message(chat_id=message.chat.id, text=file_details, disable_web_page_preview=True)
+    bot.send_message(chat_id=message.chat.id, text=f"🗂️ Archivos descargados🗂️:\n{file_details}")
+
 #Command to delete all files
 @bot.on_message(filters.command('deleteall'))
 def delete_all_files(client, message):
